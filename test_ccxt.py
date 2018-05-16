@@ -1,3 +1,4 @@
+import numpy as np
 import ccxt
 
 # Pair we are interested in
@@ -22,4 +23,19 @@ if not exchange.has['fetchOHLCV']:
     exit()
     
 tframes = exchange.timeframes
-data = exchange.fetch_ohlcv(symb, '1d')
+time_interval = tframes['1m'] # Time interval between data points
+
+# Build dataset
+data = exchange.fetch_ohlcv(symb, time_interval, since=0) # Initial data
+data_array = np.array(data)
+
+dataset = np.empty((0,data_array.shape[1])) # Dataset to be built
+
+while data:
+    print(str(len(dataset) + len(data)) + ' data points extracted...')
+    dataset = np.vstack([dataset,data_array])
+    
+    last_time = int(data_array[-1][0]) # Timestamp of the last entry
+    
+    data = exchange.fetch_ohlcv(symb, time_interval, since=last_time+1)
+    data_array = np.array(data)
